@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" name="viewport"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
 
     <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
     <title>黑名单</title>
@@ -40,8 +40,9 @@
     </div><!-- /input-group -->
     <p></p>
     <ul class="list-group">
-        <template v-for="(key,item) in list | filterBy q in 'title' | orderBy 'down' -1">
-            <a class="list-group-item" v-on:click="click(key,item)">
+        <template v-for="(key,item) in list | filterBy q in 'title' | orderBy order -1">
+            <a class="list-group-item {{item.alert ? 'active' : ''}}"
+               v-on:click="click(key,item)">
                 <span class="badge">{{item| level}}({{item.down}}/{{item.up}})</span>
                 {{item.title}}
             </a>
@@ -100,8 +101,12 @@
             q: "",
             listRef: new Wilddog("https://blacklist.wilddogio.com/list"),
             list: {},
+            alerts: {},
         },
         methods: {
+            order: function (a, b) {
+                return ((a.$value.down + a.$value.up) - (b.$value.down + b.$value.up))
+            },
             create: function () {
                 app.listRef.child(app.q).update({
                     title: app.q,
@@ -120,12 +125,37 @@
                 app.listRef.child(key).child("up").transaction(function (current) {
                     return current + 1;
                 });
-            }
+            },
+            alert: function (key) {
+                var n = {}
+                for (var k in app.list[key]) {
+                    n[k] = app.list[key][k]
+                }
+                n.alert = true
+                app.list[key] = n
 
+                setTimeout(function () {
+                    n.alert = false
+                    app.list[key] = n
+                }, 300)
+            },
         },
         ready: function () {
+
             this.listRef.on("value", function (snapshot) {
+                if (Object.keys(app.list).length == snapshot.numChildren()) {
+                    return
+                }
                 app.list = snapshot.val()
+
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+            this.listRef.on("child_changed", function (snapshot) {
+
+                app.list[snapshot.key()] = snapshot.val()
+                app.alert(snapshot.key(), true)
+
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
             });
