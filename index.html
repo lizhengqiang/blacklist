@@ -48,9 +48,10 @@
             </a>
             <li v-if="key == inCtrl" class="list-group-item">
                 <div class="btn-group" role="group" aria-label="...">
-                    <button type="button" class="btn btn-default" v-on:click="doDown(key,item)">拉黑({{item.down}})
+                    <button type="button" class="btn btn-danger"
+                            v-on:click="doDown(key,item)">拉黑({{item.down}})
                     </button>
-                    <button type="button" class="btn btn-default" v-on:click="doUp(key,item)">平反({{item.up}})
+                    <button type="button" class="btn btn-primary" v-on:click="doUp(key,item)">平反({{item.up}})
                     </button>
                 </div>
             </li>
@@ -139,12 +140,15 @@
             doDown: function (key, item) {
                 app.listRef.child(key).child("down").transaction(function (current) {
                     return current + 1;
+                }, function () {
                 });
 
             },
             doUp: function (key, item) {
                 app.listRef.child(key).child("up").transaction(function (current) {
                     return current + 1;
+                }, function () {
+
                 });
             },
             alert: function (key) {
