@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>黑名单</title>
+
+    <!-- Bootstrap -->
+    <link href="./lib/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body id="app">
+
+<div class="container">
+    <div class="page-header">
+        <h1>动动手指
+            <small>列出你的黑名单</small>
+        </h1>
+    </div>
+
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search for..." v-model="q">
+      <span class="input-group-btn">
+        <button class="btn btn-default" type="button" v-on:click="create">拉黑</button>
+      </span>
+    </div><!-- /input-group -->
+    <p></p>
+    <ul class="list-group">
+        <template v-for="(key,item) in list | filterBy q in 'title'">
+            <a class="list-group-item" v-on:click="click(key,item)">
+                <span class="badge">{{down[key]| level up[key]}}({{down[key] | length}}/{{up[key] | length}})</span>
+                {{item.title}}
+            </a>
+            <li v-if="key == inCtrl" class="list-group-item">
+                <div class="btn-group" role="group" aria-label="...">
+                    <button type="button" class="btn btn-default" v-on:click="doDown(key,item)">拉黑({{down[key] |
+                        length}})
+                    </button>
+                    <button type="button" class="btn btn-default" v-on:click="doUp(key,item)">平反({{up[key] | length}})
+                    </button>
+                </div>
+            </li>
+        </template>
+    </ul>
+
+</div>
+
+
+<!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+<script src="//cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="./lib/vue.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="./lib/js/bootstrap.min.js"></script>
+<!-- WildVue -->
+<script src="https://cdn.wilddog.com/js/client/current/wilddog.js"></script>
+
+<script>
+    Vue.filter('length', function (value) {
+        try {
+            return Object.keys(value).length
+        } catch (e) {
+            return 0
+        }
+
+    })
+    Vue.filter('level', function (down, up) {
+
+        try {
+            var dl = Object.keys(down).length
+            var ul = Object.keys(up).length
+            var value = dl / (dl + ul + 1)
+            console.log(value)
+            if (value > 0.6) {
+                return "垃圾"
+            }
+
+            if (value > 0.4) {
+                return "别去"
+            }
+
+            if (value > 0.2) {
+                return "较差"
+            }
+        } catch (e) {
+            return "异常"
+        }
+        return "正常"
+
+    })
+    var app = new Vue({
+        el: '#app',
+        data: {
+            message: 'Hello Vue.js!',
+
+            inCtrl: "",
+            q: "",
+            listRef: new Wilddog("https://blacklist.wilddogio.com/list"),
+            list: {},
+            downRef: new Wilddog("https://blacklist.wilddogio.com/down"),
+            down: {},
+            upRef: new Wilddog("https://blacklist.wilddogio.com/up"),
+            up: {},
+        },
+        methods: {
+            create: function () {
+                app.listRef.child(app.q).update({
+                    title: app.q,
+                })
+            },
+            click: function (key, item) {
+                app.inCtrl = key
+            },
+            doDown: function (key, item) {
+                app.downRef.child(key).push({
+                    tick: 1,
+                })
+            },
+            doUp: function (key, item) {
+                app.upRef.child(key).push({
+                    tick: 1,
+                })
+            }
+
+        },
+        ready: function () {
+            this.listRef.on("value", function (snapshot) {
+                app.list = snapshot.val()
+                console.log(snapshot.val());
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+
+            this.downRef.on("value", function (snapshot) {
+                app.down = snapshot.val()
+                console.log(snapshot.val());
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+
+            this.upRef.on("value", function (snapshot) {
+                app.up = snapshot.val()
+                console.log(snapshot.val());
+            }, function (errorObject) {
+                console.log("The read failed: " + errorObject.code);
+            });
+        }
+
+    })
+</script>
+</body>
+</html>
