@@ -26,7 +26,7 @@
 <body id="app">
 
 <div class="container">
-    <div class="page-header">
+    <div class="page-header" v-on:click="queryGeo">
         <h1>动动手指
             <small>列出你的黑名单</small>
         </h1>
@@ -69,6 +69,8 @@
 <script src="./lib/js/bootstrap.min.js"></script>
 <!-- WildVue -->
 <script src="https://cdn.wilddog.com/js/client/current/wilddog.js"></script>
+<!-- WildGeo -->
+<script src="https://cdn.wilddog.com/app/wildgeo/0.5.0/wildgeo.min.js"></script>
 
 <script>
     Vue.filter('level', function (item) {
@@ -100,7 +102,7 @@
             message: 'Hello Vue.js!',
             inCtrl: "",
             q: "",
-            listRef: new Wilddog("https://blacklist.wilddogio.com/list"),
+            listRef: new Wilddog(window.location.hash ? "https://blacklist.wilddogio.com/" + window.location.hash.replace("#", "") + "/list" : "https://blacklist.wilddogio.com/list"),
             list: {},
             alerts: {},
         },
@@ -130,6 +132,7 @@
                     title: app.q,
                 })
             },
+
             click: function (key, item) {
                 if (app.inCtrl == key) {
                     app.inCtrl = ""
@@ -188,6 +191,8 @@
             this.listRef.on("child_removed", function (snapshot) {
                 app.reload()
             }, errCallback);
+
+
         }
 
     })
