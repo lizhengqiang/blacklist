@@ -47,10 +47,9 @@
             </a>
             <li v-if="key == inCtrl" class="list-group-item">
                 <div class="btn-group" role="group" aria-label="...">
-                    <button type="button" class="btn btn-default" v-on:click="doDown(key,item)">拉黑({{down[key] |
-                        length}})
+                    <button type="button" class="btn btn-default" v-on:click="doDown(key,item)">拉黑({{item.down}})
                     </button>
-                    <button type="button" class="btn btn-default" v-on:click="doUp(key,item)">平反({{up[key] | length}})
+                    <button type="button" class="btn btn-default" v-on:click="doUp(key,item)">平反({{item.up}})
                     </button>
                 </div>
             </li>
@@ -126,14 +125,9 @@
                 app.inCtrl = key
             },
             doDown: function (key, item) {
-                app.downRef.child(key).push({
-                    tick: 1,
-                })
+
             },
             doUp: function (key, item) {
-                app.upRef.child(key).push({
-                    tick: 1,
-                })
             }
 
         },
