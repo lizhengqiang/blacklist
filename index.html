@@ -40,9 +40,9 @@
     </div><!-- /input-group -->
     <p></p>
     <ul class="list-group">
-        <template v-for="(key,item) in list | filterBy q in 'title'">
+        <template v-for="(key,item) in list | filterBy q in 'title' | orderBy 'down' -1">
             <a class="list-group-item" v-on:click="click(key,item)">
-                <span class="badge">{{down[key]| level up[key]}}({{down[key] | length}}/{{up[key] | length}})</span>
+                <span class="badge">{{item| level}}({{item.down}}/{{item.up}})</span>
                 {{item.title}}
             </a>
             <li v-if="key == inCtrl" class="list-group-item">
@@ -69,21 +69,12 @@
 <script src="https://cdn.wilddog.com/js/client/current/wilddog.js"></script>
 
 <script>
-    Vue.filter('length', function (value) {
-        try {
-            return Object.keys(value).length
-        } catch (e) {
-            return 0
-        }
-
-    })
-    Vue.filter('level', function (down, up) {
+    Vue.filter('level', function (item) {
 
         try {
-            var dl = Object.keys(down).length
-            var ul = Object.keys(up).length
-            var value = dl / (dl + ul + 1)
-            console.log(value)
+            var dl = item.down
+            var ul = item.up
+            var value = (dl + 1) / (dl + ul + 1)
             if (value > 0.6) {
                 return "垃圾"
             }
@@ -105,15 +96,10 @@
         el: '#app',
         data: {
             message: 'Hello Vue.js!',
-
             inCtrl: "",
             q: "",
             listRef: new Wilddog("https://blacklist.wilddogio.com/list"),
             list: {},
-            downRef: new Wilddog("https://blacklist.wilddogio.com/down"),
-            down: {},
-            upRef: new Wilddog("https://blacklist.wilddogio.com/up"),
-            up: {},
         },
         methods: {
             create: function () {
@@ -125,33 +111,25 @@
                 app.inCtrl = key
             },
             doDown: function (key, item) {
+                app.listRef.child(key).child("down").transaction(function (current) {
+                    return current + 1;
+                });
 
             },
             doUp: function (key, item) {
+                app.listRef.child(key).child("up").transaction(function (current) {
+                    return current + 1;
+                });
             }
 
         },
         ready: function () {
             this.listRef.on("value", function (snapshot) {
                 app.list = snapshot.val()
-                console.log(snapshot.val());
             }, function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
             });
 
-            this.downRef.on("value", function (snapshot) {
-                app.down = snapshot.val()
-                console.log(snapshot.val());
-            }, function (errorObject) {
-                console.log("The read failed: " + errorObject.code);
-            });
-
-            this.upRef.on("value", function (snapshot) {
-                app.up = snapshot.val()
-                console.log(snapshot.val());
-            }, function (errorObject) {
-                console.log("The read failed: " + errorObject.code);
-            });
         }
 
     })
