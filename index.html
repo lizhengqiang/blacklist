@@ -105,7 +105,24 @@
         },
         methods: {
             order: function (a, b) {
-                return ((a.$value.down + a.$value.up) - (b.$value.down + b.$value.up))
+                var sa, sb
+                try {
+                    sa = a.$value.down + a.$value.up
+                } catch (e) {
+                    sa = 0
+                }
+                if (sa === NaN) {
+                    sa = 0
+                }
+                try {
+                    sb = b.$value.down + b.$value.up
+                } catch (e) {
+                    sb = 0
+                }
+                if (sb === NaN) {
+                    sb = 0
+                }
+                return sa - sb
             },
             create: function () {
                 app.listRef.child(app.q).update({
@@ -113,6 +130,10 @@
                 })
             },
             click: function (key, item) {
+                if (app.inCtrl == key) {
+                    app.inCtrl = ""
+                    return
+                }
                 app.inCtrl = key
             },
             doDown: function (key, item) {
@@ -139,27 +160,30 @@
                     app.list[key] = n
                 }, 300)
             },
+
+            reload: function () {
+                this.listRef.once("value", function (snapshot) {
+                    app.list = snapshot.val()
+                }, function (errorObject) {
+                    console.log("The read failed: " + errorObject.code);
+                });
+            }
         },
         ready: function () {
-
-            this.listRef.on("value", function (snapshot) {
-                if (Object.keys(app.list).length == snapshot.numChildren()) {
-                    return
-                }
-                app.list = snapshot.val()
-
-            }, function (errorObject) {
+            var errCallback = function (errorObject) {
                 console.log("The read failed: " + errorObject.code);
-            });
-            this.listRef.on("child_changed", function (snapshot) {
+            }
 
+            this.listRef.on("child_changed", function (snapshot) {
                 app.list[snapshot.key()] = snapshot.val()
                 app.alert(snapshot.key(), true)
-
-            }, function (errorObject) {
-                console.log("The read failed: " + errorObject.code);
-            });
-
+            }, errCallback);
+            this.listRef.on("child_added", function (snapshot) {
+                app.reload()
+            }, errCallback);
+            this.listRef.on("child_removed", function (snapshot) {
+                app.reload()
+            }, errCallback);
         }
 
     })
